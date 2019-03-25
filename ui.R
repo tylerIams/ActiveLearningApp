@@ -29,7 +29,9 @@ shinyUI(fluidPage(
     mainPanel(
       tableOutput("table"),
       uiOutput("label"),
-      textOutput("labelTextInfo")
+      textOutput("labelTextInfo"),
+      uiOutput("genMod"),
+      tableOutput("round")
     )
   
     

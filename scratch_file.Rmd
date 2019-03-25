@@ -15,3 +15,9 @@ full_dat <- cbind(dat, labs[,1])
 colnames(full_dat)[colnames(full_dat)=="1.0"] <- "label"
 write_csv(full_dat, "full_malaria.csv")
 ```
+
+```{r}
+dat <- read_csv("full_malaria.csv")
+dat[1:2600,501] <- NA
+write_csv(dat, "full_malaria_withNAs.csv")
+```
