@@ -1,0 +1,17 @@
+---
+title: "scratch_file"
+author: "Tyler Iams"
+date: "3/24/2019"
+output: html_document
+---
+
+```{r}
+dat <- read_csv("featurized_malaria_data.csv")
+labs <- read_csv("malaria_data_labels.csv")
+```
+
+```{r}
+full_dat <- cbind(dat, labs[,1])
+colnames(full_dat)[colnames(full_dat)=="1.0"] <- "label"
+write_csv(full_dat, "full_malaria.csv")
+```

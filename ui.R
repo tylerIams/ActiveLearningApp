@@ -6,6 +6,9 @@
 #
 
 library(shiny)
+library(tidyverse)
+library(glmnet)
+options(shiny.maxRequestSize = 30*1024^2)
 
 shinyUI(fluidPage(
 
@@ -23,6 +26,12 @@ shinyUI(fluidPage(
     
     
     # Show a plot of the generated distribution
-    mainPanel()
-  )
+    mainPanel(
+      tableOutput("table"),
+      uiOutput("label"),
+      textOutput("labelTextInfo")
+    )
+  
+    
+    )
 ))
