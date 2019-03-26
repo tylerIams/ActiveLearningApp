@@ -136,7 +136,9 @@ shinyServer(function(input, output) {
   
   output$getDatToLab <- renderTable({
     req(input$cont)
-    findDataToLabel(candidate_set)
+    candidate_set <- findDataToLabel(candidate_set)
+    candidate_set_table <- candidate_set %>% select(image, max_probs)
+    return(candidate_set_table[1:10,])
   })
   
   

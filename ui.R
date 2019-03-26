@@ -34,7 +34,8 @@ shinyUI(fluidPage(
     mainPanel(
       tableOutput("table"),
       plotOutput("round"),
-      uiOutput("afterPlot")
+      uiOutput("afterPlot"),
+      tableOutput("getDatToLab")
     )
     
     )

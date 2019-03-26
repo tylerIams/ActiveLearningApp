@@ -86,6 +86,7 @@ findDataToLabel <- function(candidate_set) {
   max_probs <- apply(category_prob, 1, FUN = max)
   candidate_set <- cbind(candidate_set, max_probs)
   candidate_set <- candidate_set %>% arrange(max_probs)
+  return(candidate_set)
 }
 
 
