@@ -28,8 +28,12 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       tableOutput("table"),
+      textOutput("dfSummary"),
+      uiOutput("continue"),
       uiOutput("label"),
+      uiOutput("image"),
       textOutput("labelTextInfo"),
+      textOutput("imageTextInfo"),
       uiOutput("genMod"),
       tableOutput("round")
     )

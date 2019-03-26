@@ -13,6 +13,9 @@ label <- NULL
 active_set <- NULL
 candidate_set <- NULL
 
+imCol <- NULL
+labCol <- NULL
+
 shinyServer(function(input, output) {
   
   # Renders the initial input
@@ -36,24 +39,78 @@ shinyServer(function(input, output) {
   output$table <- renderTable({
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
-    return(df[1:10,])
+    num <- ncol(df)
+    sec <- num -1
+    return(df[1:10,sec:num])
+  })
+  
+  output$dfSummary <- renderText({
+    req(input$file1)
+    pt1 <- str_c("Your data contains ", nrow(df), " images with ", ncol(df), " features.")
+    pt2 <- NULL
+    if ("image" %in% colnames(df)) {
+      pt2 <- str_c("Your data contains an image column called image.")
+      imCol <<- TRUE
+    } else {
+      pt2 <- str_c("Your data does not contain an image column called image.")
+    }
+    pt3 <- NULL
+    if ("label" %in% colnames(df)) {
+      pt3 <- str_c("Your data contains a column of labels called label.")
+      labCol <<- TRUE
+    }
+    else {
+      pt3 <- str_c("Your data does not contain a column of labels called label.")
+    }
+    fin <- str_c(pt1, pt2, pt3, sep = " ")
+    return(fin)
+  })
+  
+  output$continue <- renderUI({
+    req(input$file1)
+    actionButton("continue", "Continue")
   })
   
   output$label <- renderUI({
-    req(input$file1)
-    selectInput("label", "Please Select the Column Containing Labels: ", 
-                choices = colnames(df))
+    req(input$continue)
+    if (labCol == FALSE) {
+      selectInput("label", "Please Select the Column Containing Labels: ", 
+                  choices = colnames(df))
+    } else {
+      selectInput("label", "Column Containing Labels: ", 
+                  choices = "label")
+    }
+  })
+  
+  output$image <- renderUI({
+    req(input$continue)
+    if (imCol == FALSE) {
+      selectInput("image", "Please select the column containing the image filenames", 
+                  choices = colnames(df))
+    } else {
+      selectInput("image", "Image filenames", 
+                  choices = "image")
+    }
   })
   
   output$labelTextInfo <- renderText({
-    req(input$label)
+    req(input$continue)
     sel <- df %>% select(input$label) %>% na.omit()
     num <- nrow(sel)
-    return(str_c("You have selected column ", input$label, " as your labels.  This has ", num, " labels."))
+    return(str_c("Column ", input$label, " will be used as your labels.  
+                 This has ", num, " labels."))
+  })
+  
+  output$imageTextInfo <- renderText({
+    req(input$continue)
+    sel <- df %>% select(input$image) %>% na.omit()
+    num <- nrow(sel)
+    return(str_c("Column ", input$image, " has your image files.  
+                 This has ", num, " images."))
   })
   
   output$genMod <- renderUI({
-    req(input$label)
+    req(input$continue)
     label <- str_c(input$label)
     active_set <<- df %>% na.omit()
     candidate_set <<- df %>% filter(is.na(label) == TRUE)
@@ -74,5 +131,7 @@ shinyServer(function(input, output) {
     candidate_set <- candidate_set %>% arrange(max_probs)
     return(candidate_set[1:10,])
   })
+  
+  
   
 })
