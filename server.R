@@ -7,6 +7,7 @@
 
 library(shiny)
 library(tidyverse)
+library(png)
 source("modeling_functions.R")
 
 df <- NULL
@@ -141,7 +142,10 @@ shinyServer(function(input, output) {
     return(candidate_set_table[1:10,])
   })
   
-  
-  
+  output$img <- renderUI({
+    req(input$cont)
+    img_file <- str_c("malaria_images/", candidate_set$image[1])
+    tags$img(src = img_file)
+  })
   
 })
