@@ -7,14 +7,16 @@
 
 library(shiny)
 library(tidyverse)
+source("modeling_functions.R")
 
 df <- NULL
 label <- NULL
 active_set <- NULL
 candidate_set <- NULL
-
 imCol <- NULL
 labCol <- NULL
+
+
 
 shinyServer(function(input, output) {
   
@@ -117,21 +119,14 @@ shinyServer(function(input, output) {
     actionButton("mod", "Generate Model")
   })
   
-  output$round <- renderTable({
+  output$round <- renderPlot({
     req(input$mod)
-    x_train <- model.matrix(~ ., select(active_set, -label))
-    y_train <- active_set$label
-    active_model <- glmnet(x_train, y_train, alpha=0.0, 
-                            lambda=0.1,
-                            family="multinomial")
-    x_test <- model.matrix(~ ., select(candidate_set, -label))
-    category_prob <- predict(active_model, newx=x_test, type="response")
-    max_probs <- apply(category_prob, 1, FUN = max)
-    candidate_set <- cbind(candidate_set, max_probs)
-    candidate_set <- candidate_set %>% arrange(max_probs)
-    return(candidate_set[1:10,])
+    tab <- createModels(active_set)
+    tab <- tab %>% mutate(ROUND = factor(ROUND),
+                          FOLD = factor(FOLD))
+    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_point()
+    return(plot)
   })
-  
   
   
 })

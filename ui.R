@@ -35,7 +35,7 @@ shinyUI(fluidPage(
       textOutput("labelTextInfo"),
       textOutput("imageTextInfo"),
       uiOutput("genMod"),
-      tableOutput("round")
+      plotOutput("round")
     )
   
     
