@@ -21,23 +21,21 @@ shinyUI(fluidPage(
     sidebarPanel(
       tags$h4(radioButtons("init", "Do you have featurized data?",
                            c("Yes", "No"), "")),
-      uiOutput("file")
+      uiOutput("file"),
+      tags$h4(textOutput("dfSummary")),
+      uiOutput("continue"),
+      uiOutput("label"),
+      uiOutput("image"),
+      tags$h4(textOutput("labelTextInfo")),
+      tags$h4(textOutput("imageTextInfo")),
+      uiOutput("genMod")
     ),
-    
     
     # Show a plot of the generated distribution
     mainPanel(
       tableOutput("table"),
-      textOutput("dfSummary"),
-      uiOutput("continue"),
-      uiOutput("label"),
-      uiOutput("image"),
-      textOutput("labelTextInfo"),
-      textOutput("imageTextInfo"),
-      uiOutput("genMod"),
       plotOutput("round")
     )
   
-    
     )
 ))

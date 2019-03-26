@@ -43,7 +43,7 @@ shinyServer(function(input, output) {
     df <<- read.csv(input$file1$datapath)
     num <- ncol(df)
     sec <- num -1
-    return(df[1:10,sec:num])
+    return(df[1:5,sec:num])
   })
   
   output$dfSummary <- renderText({
@@ -127,6 +127,7 @@ shinyServer(function(input, output) {
     plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_point()
     return(plot)
   })
+  
   
   
 })
