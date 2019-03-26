@@ -124,9 +124,21 @@ shinyServer(function(input, output) {
     tab <- createModels(active_set)
     tab <- tab %>% mutate(ROUND = factor(ROUND),
                           FOLD = factor(FOLD))
+    #Here is where you could incorporate past data
     plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_point()
     return(plot)
   })
+  
+  output$afterPlot <- renderUI({
+    req(input$mod)
+    actionButton("cont", "Get Data To Label")
+  })
+  
+  output$getDatToLab <- renderTable({
+    req(input$cont)
+    findDataToLabel(candidate_set)
+  })
+  
   
   
   

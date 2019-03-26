@@ -10,14 +10,66 @@ dat <- read_csv("featurized_malaria_data.csv")
 labs <- read_csv("malaria_data_labels.csv")
 ```
 
+##Creates dat but no NAs
 ```{r}
 full_dat <- cbind(dat, labs[,1])
 colnames(full_dat)[colnames(full_dat)=="1.0"] <- "label"
 write_csv(full_dat, "full_malaria.csv")
 ```
 
+
+##Creates dat with NAs
 ```{r}
 dat <- read_csv("full_malaria.csv")
 dat[1:2600,501] <- NA
 write_csv(dat, "full_malaria_withNAs.csv")
 ```
+
+
+###Code to be moved over to model generation function in server
+
+```{r}
+ df <- read_csv("full_malaria_withNAs.csv")
+ active_set <- df %>% na.omit()
+ candidate_set <- df %>% filter(is.na(label) == TRUE) 
+ 
+ fold1 <- sample(1:nrow(active_set), nrow(active_set)/2)
+ fold2 <- active_set[-fold1,]
+ fold1 <- active_set[fold1,]
+ 
+ x_train <- model.matrix(~ ., select(fold1, -image, -label))
+ x_train <- x_train[,-1]
+ y_train <- fold1$label
+ 
+ 
+ active_model <- glmnet(x_train, y_train, alpha=0.0, 
+                            lambda=0.1,
+                            family="multinomial")
+  x_test <- model.matrix(~ ., select(fold2, -image, -label))
+  x_test <- x_test[,-1]
+  y_test <- fold2$label
+  preds <- predict(active_model, newx = x_test, type="class")
+  tab <- table(preds, y_test)
+  sum <- 0
+  acc <- -1.0
+  if (nrow(tab) == ncol(tab)) {
+     for (x in 1:nrow(tab)) {
+       sum = sum + tab[x,x]
+     }
+    acc <- sum/sum(tab)
+  }
+  print(acc)
+  
+  category_prob <- predict(active_model, newx=x_test, type="response")
+  
+  max_probs <- apply(category_prob, 1, FUN = max)
+  candidate_set <- cbind(candidate_set, max_probs)
+  candidate_set <- candidate_set %>% arrange(max_probs)
+
+```
+
+
+
+
+
+

@@ -17,7 +17,6 @@ shinyUI(fluidPage(
 
   # Sidebar with a slider input for number of bins
   sidebarLayout(
-    
     sidebarPanel(
       tags$h4(radioButtons("init", "Do you have featurized data?",
                            c("Yes", "No"), "")),
@@ -34,8 +33,9 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       tableOutput("table"),
-      plotOutput("round")
+      plotOutput("round"),
+      uiOutput("afterPlot")
     )
-  
+    
     )
 ))
