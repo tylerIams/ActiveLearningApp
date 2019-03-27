@@ -8,6 +8,7 @@
 library(shiny)
 library(tidyverse)
 library(png)
+library(shinyjs)
 source("modeling_functions.R")
 
 df <- NULL
@@ -16,7 +17,7 @@ active_set <- NULL
 candidate_set <- NULL
 imCol <- NULL
 labCol <- NULL
-
+tab <- tibble(ROUND = NA, FOLD = NA, ACCURACY = NA)
 
 
 shinyServer(function(input, output) {
@@ -125,11 +126,10 @@ shinyServer(function(input, output) {
   
   output$round <- renderPlot({
     req(input$mod)
-    tab <- createModels(active_set)
-    tab <- tab %>% mutate(ROUND = factor(ROUND),
-                          FOLD = factor(FOLD))
-    #Here is where you could incorporate past data
-    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_point()
+    temp <- createModels(active_set)
+    print(temp)
+    tab <<- rbind(tab, temp) %>% na.omit()
+    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_line()
     return(plot)
   })
   
@@ -147,7 +147,7 @@ shinyServer(function(input, output) {
   
   output$canYouLabel <- renderText({
     req(input$cont)
-    return(str_c("Can you label this image?: "))
+    return(str_c("Can you label this image? "))
   })
   
   output$img <- renderUI({
@@ -173,7 +173,5 @@ shinyServer(function(input, output) {
     write_csv(df, "input$file1.csv")
     return("Label Saved Successfully")
   })
-  
-  
   
 })

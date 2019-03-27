@@ -1,7 +1,7 @@
 
 ####This script is for active learning modeling
 active_model <- NULL
-
+y <- 0
 
 ####This function takes the active set as a parameter and
 ####creates two folds, it creates a ridge regression (glmnet)
@@ -10,6 +10,7 @@ active_model <- NULL
 ###It logs the accuracy in a table (acc_tab) and returns it.
 createModels <- function(active_set) {
   
+  y <<- y + 1
   #Divide the active set into folds
   fold1 <- sample(1:nrow(active_set), nrow(active_set)/2)
   fold2 <- active_set[-fold1,]
@@ -39,7 +40,7 @@ createModels <- function(active_set) {
     acc <- sum/sum(tab)
   }
   print(acc)
-  acc_tab <- tibble(ROUND = 1, FOLD = 1, ACCURACY = acc)
+  acc_tab <- tibble(ROUND = y, FOLD = 1, ACCURACY = acc)
   
   #Create the training set with fold2
   x_train <- model.matrix(~ ., select(fold2, -image, -label))
@@ -65,7 +66,7 @@ createModels <- function(active_set) {
     acc <- sum/sum(tab)
   }
   print(acc)
-  acc_tab2 <- tibble(ROUND = 1, FOLD = 2, ACCURACY = acc)
+  acc_tab2 <- tibble(ROUND = y, FOLD = 2, ACCURACY = acc)
   acc_tab <- rbind(acc_tab, acc_tab2)
   
   return(acc_tab)
