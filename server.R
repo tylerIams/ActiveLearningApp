@@ -23,6 +23,7 @@ tab <- tibble(ROUND = NA, ACCURACY = NA)
 
 shinyServer(function(input, output) {
   
+  
   # Renders the initial input
   output$file <- renderUI({
     req(input$init)
@@ -37,7 +38,6 @@ shinyServer(function(input, output) {
                 multiple = TRUE,
                 accept = c("image/.png", "image/.jpeg")) 
     }
-    
   })
   
   # Creates the table
@@ -45,7 +45,7 @@ shinyServer(function(input, output) {
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
     if ("label" %in% colnames(df)) {
-    df <<- df %>% mutate(label = factor(label))
+        df <<- df %>% mutate(label = factor(label))
       }
     num <- ncol(df)
     sec <- num -1
@@ -79,6 +79,24 @@ shinyServer(function(input, output) {
     actionButton("continue", "Continue")
   })
   
+  observeEvent(input$continue, {
+    removeUI(
+      selector = "#dataSummary"
+    )
+  })
+  
+  observeEvent(input$continue, {
+    removeUI(
+      selector = "#file"
+    )
+  })
+  
+  observeEvent(input$continue, {
+    removeUI(
+      selector = "#init"
+    )
+  })
+  
   output$label <- renderUI({
     req(input$continue)
     RND <<- RND + 1
@@ -104,18 +122,24 @@ shinyServer(function(input, output) {
   
   output$labelTextInfo <- renderText({
     req(input$continue)
-    sel <- df %>% select(input$label) %>% na.omit()
-    num <- nrow(sel)
-    return(str_c("Column ", input$label, " will be used as your labels.  
+    times <- input$reset_input
+    div(id = letters[(times %% length(letters)) + 1],
+        sel <- df %>% select(input$label) %>% na.omit(),
+        num <- nrow(sel),
+        return(str_c("Column ", input$label, " will be used as your labels.  
                  This has ", num, " labels."))
+        )
   })
   
   output$imageTextInfo <- renderText({
     req(input$continue)
-    sel <- df %>% select(input$image) %>% na.omit()
-    num <- nrow(sel)
-    return(str_c("Column ", input$image, " has your image files.  
+    times <- input$reset_input
+    div(id = letters[(times %% length(letters)) + 1],
+        sel <- df %>% select(input$image) %>% na.omit(),
+        num <- nrow(sel),
+        return(str_c("Column ", input$image, " has your image files.  
                  This has ", num, " images."))
+    )
   })
   
   output$genMod <- renderUI({
@@ -183,6 +207,11 @@ shinyServer(function(input, output) {
     df$label[df$image == img_file] <<- input$newLab
     write_csv(df, "input$file1.csv")
     return("Label Saved Successfully")
+  })
+  
+  output$button <- renderUI({
+    req(input$save)
+    actionButton("reset_input", "Go to next round")
   })
   
 })

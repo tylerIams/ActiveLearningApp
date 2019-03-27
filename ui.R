@@ -22,31 +22,36 @@ shinyUI(fluidPage(
                            c("Yes", "No"), "")),
       uiOutput("file"),
       tableOutput("table"),
-      tags$h4(textOutput("dfSummary")),
-      uiOutput("continue"),
+      tags$div(id = "dataSummary",
+               tags$h4(textOutput("dfSummary"))),
+      uiOutput("continue"), 
+      hr(),
       uiOutput("label"),
       uiOutput("image"),
       tags$h4(textOutput("labelTextInfo")),
       tags$h4(textOutput("imageTextInfo")),
-      uiOutput("genMod"),
-      tableOutput("getDatToLab")
+      uiOutput("genMod")
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-      uiOutput("slider"),
-      plotOutput("round"),
-      hr(),
-      uiOutput("afterPlot"),
-      hr(),
-      tags$h4(textOutput("canYouLabel")),
-      uiOutput("img"),
-      uiOutput("applyLabel"),
-      uiOutput("saveLabel"),
-      textOutput("saveSuccessful")
+      tabsetPanel(type = "tabs",
+                  tabPanel("Plot", 
+                           plotOutput("round"),
+                           uiOutput("slider"),
+                           uiOutput("afterPlot")
+                           ),
+                  tabPanel("Least Confident Data",
+                           tableOutput("getDatToLab")),
+                  tabPanel("Image", 
+                           tags$h4(textOutput("canYouLabel")),
+                           uiOutput("img"),
+                           uiOutput("applyLabel"),
+                           uiOutput("saveLabel"),
+                           tags$h3(textOutput("saveSuccessful")))
+                  )
+      )
     )
-    
-    
-    
+
     )
-))
+)
