@@ -142,10 +142,15 @@ shinyServer(function(input, output) {
     return(candidate_set_table[1:10,])
   })
   
+  output$canYouLabel <- renderText({
+    req(input$cont)
+    return(str_c("Can you label this image?: "))
+  })
+  
   output$img <- renderUI({
     req(input$cont)
     img_file <- str_c("malaria_images/", candidate_set$image[1])
-    tags$img(src = img_file)
+    tags$img(src = img_file, height=250, width=250)
   })
   
 })

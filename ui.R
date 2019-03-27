@@ -38,6 +38,7 @@ shinyUI(fluidPage(
       hr(),
       uiOutput("afterPlot"),
       hr(),
+      tags$h4(textOutput("canYouLabel")),
       uiOutput("img")
     )
     )
