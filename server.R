@@ -97,6 +97,12 @@ shinyServer(function(input, output) {
     )
   })
   
+  observeEvent(input$continue, {
+    removeUI(
+      selector = "#table"
+    )
+  })
+  
   output$label <- renderUI({
     req(input$continue)
     RND <<- RND + 1
@@ -209,9 +215,10 @@ shinyServer(function(input, output) {
     return("Label Saved Successfully")
   })
   
-  output$button <- renderUI({
+  output$goToNextRound <- renderText({
     req(input$save)
-    actionButton("reset_input", "Go to next round")
+    return("Press Continue (on left side bar) to enter next round, then Generate Model to
+           generate a new model with newly labeled data.")
   })
   
 })

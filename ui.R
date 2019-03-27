@@ -48,7 +48,8 @@ shinyUI(fluidPage(
                            uiOutput("img"),
                            uiOutput("applyLabel"),
                            uiOutput("saveLabel"),
-                           tags$h3(textOutput("saveSuccessful")))
+                           tags$h3(textOutput("saveSuccessful")),
+                           tags$h4(textOutput("goToNextRound")))
                   )
       )
     )
