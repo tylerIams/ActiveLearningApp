@@ -8,7 +8,7 @@
 library(shiny)
 library(tidyverse)
 library(glmnet)
-options(shiny.maxRequestSize = 30*1024^2)
+options(shiny.maxRequestSize = 100*1024^2)
 
 shinyUI(fluidPage(
 
@@ -39,7 +39,13 @@ shinyUI(fluidPage(
       uiOutput("afterPlot"),
       hr(),
       tags$h4(textOutput("canYouLabel")),
-      uiOutput("img")
+      uiOutput("img"),
+      uiOutput("applyLabel"),
+      uiOutput("saveLabel"),
+      textOutput("saveSuccessful")
     )
+    
+    
+    
     )
 ))

@@ -42,6 +42,9 @@ shinyServer(function(input, output) {
   output$table <- renderTable({
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
+    if ("label" %in% colnames(df)) {
+    df <<- df %>% mutate(label = factor(label))
+      }
     num <- ncol(df)
     sec <- num -1
     return(df[1:5,sec:num])
@@ -152,5 +155,25 @@ shinyServer(function(input, output) {
     img_file <- str_c("malaria_images/", candidate_set$image[1])
     tags$img(src = img_file, height=250, width=250)
   })
+  
+  output$applyLabel <- renderUI({
+    req(input$cont)
+    selectInput("newLab", "Please Select a label: ", choices = levels(df$label))
+  })
+  
+  output$saveLabel <- renderUI({
+    req(input$newLab)
+    actionButton("save", "Apply Label")
+  })
+  
+  output$saveSuccessful <- renderText({
+    req(input$save)
+    img_file <- str_c(candidate_set$image[1])
+    df$label[df$image == img_file] <<- input$newLab
+    write_csv(df, "input$file1.csv")
+    return("Label Saved Successfully")
+  })
+  
+  
   
 })

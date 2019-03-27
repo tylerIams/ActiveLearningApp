@@ -76,8 +76,7 @@ candidate_set <- candidate_set %>% arrange(max_probs)
 
 
 ```{r}
-img.n <- readPNG("malaria_images/C1_thinF_IMG_20150604_104722_cell_115.png")
-plot(1:2, type='n')
-pp <- rasterImage(img.n, 1, 1, 2, 2)
+df <- df %>% mutate(label = factor(label))
+levels(df$label)
 ```
 
