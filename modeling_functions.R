@@ -8,7 +8,7 @@ y <- 0
 ####model with each fold, uses the opposite fold to predict
 ####with the model, and measures the model's accuracy.
 ###It logs the accuracy in a table (acc_tab) and returns it.
-createModels <- function(active_set) {
+createModels <- function(active_set, lambda, ROUND) {
   
   y <<- y + 1
   #Divide the active set into folds
@@ -23,7 +23,7 @@ createModels <- function(active_set) {
   
   #Create the first model with fold1 as train and fold2 as test
   active_model <<- glmnet(x_train, y_train, alpha=0.0, 
-                         lambda=0.1,
+                         lambda=lambda,
                          family="multinomial")
   x_test <- model.matrix(~ ., select(fold2, -image, -label))
   x_test <- x_test[,-1]
@@ -37,10 +37,9 @@ createModels <- function(active_set) {
     for (x in 1:nrow(tab)) {
       sum = sum + tab[x,x]
     }
-    acc <- sum/sum(tab)
+    acc1 <- sum/sum(tab)
   }
-  print(acc)
-  acc_tab <- tibble(ROUND = y, FOLD = 1, ACCURACY = acc)
+  print(acc1)
   
   #Create the training set with fold2
   x_train <- model.matrix(~ ., select(fold2, -image, -label))
@@ -63,11 +62,13 @@ createModels <- function(active_set) {
     for (x in 1:nrow(tab)) {
       sum = sum + tab[x,x]
     }
-    acc <- sum/sum(tab)
+    acc2 <- sum/sum(tab)
   }
-  print(acc)
-  acc_tab2 <- tibble(ROUND = y, FOLD = 2, ACCURACY = acc)
-  acc_tab <- rbind(acc_tab, acc_tab2)
+  print(acc2)
+  acc <- (acc1 + acc2) / 2
+  
+  acc_tab <- tibble(ROUND = ROUND, ACCURACY = acc)
+  
   
   return(acc_tab)
 }

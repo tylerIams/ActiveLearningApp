@@ -17,7 +17,8 @@ active_set <- NULL
 candidate_set <- NULL
 imCol <- NULL
 labCol <- NULL
-tab <- tibble(ROUND = NA, FOLD = NA, ACCURACY = NA)
+RND <- 0
+tab <- tibble(ROUND = NA, ACCURACY = NA)
 
 
 shinyServer(function(input, output) {
@@ -80,6 +81,7 @@ shinyServer(function(input, output) {
   
   output$label <- renderUI({
     req(input$continue)
+    RND <<- RND + 1
     if (labCol == FALSE) {
       selectInput("label", "Please Select the Column Containing Labels: ", 
                   choices = colnames(df))
@@ -124,12 +126,21 @@ shinyServer(function(input, output) {
     actionButton("mod", "Generate Model")
   })
   
+  output$slider <- renderUI({
+    req(input$mod)
+    sliderInput("lambda",
+                "Choose Lambda:",
+                min = .01,
+                max = .75,
+                value = .05)
+  })
+  
   output$round <- renderPlot({
     req(input$mod)
-    temp <- createModels(active_set)
-    print(temp)
+    temp <- createModels(active_set, input$lambda, RND)
+    tab <<- tab %>% filter(ROUND < RND)
     tab <<- rbind(tab, temp) %>% na.omit()
-    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY, color = FOLD)) + geom_line()
+    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line()
     return(plot)
   })
   
