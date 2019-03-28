@@ -71,7 +71,6 @@ createModels <- function(active_set, lambda, ROUND) {
   
   acc_tab <- tibble(ROUND = ROUND, ACCURACY = acc)
   
-  
   return(acc_tab)
 }
 
@@ -92,7 +91,4 @@ findDataToLabel <- function(candidate_set) {
   candidate_set <- candidate_set %>% arrange(max_probs)
   return(candidate_set)
 }
-
-
-
 

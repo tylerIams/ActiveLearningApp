@@ -37,6 +37,7 @@ shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", 
+                           tags$h3(textOutput("acc")),
                            plotOutput("round"),
                            uiOutput("slider"),
                            uiOutput("afterPlot")

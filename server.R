@@ -167,7 +167,7 @@ shinyServer(function(input, output) {
     temp <- createModels(active_set, input$lambda, RND)
     tab <<- tab %>% filter(ROUND < RND)
     tab <<- rbind(tab, temp) %>% na.omit()
-    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line()
+    plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
     return(plot)
   })
   
