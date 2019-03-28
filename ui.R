@@ -8,7 +8,7 @@
 library(shiny)
 library(tidyverse)
 library(glmnet)
-options(shiny.maxRequestSize = 100*1024^2)
+options(shiny.maxRequestSize = 1000*1024^2)
 
 shinyUI(fluidPage(
 
@@ -44,7 +44,9 @@ shinyUI(fluidPage(
                            uiOutput("afterPlot")
                            ),
                   tabPanel("Least Confident Data",
-                           tableOutput("getDatToLab")),
+                           tableOutput("getDatToLab"),
+                           uiOutput("numToExport"),
+                           uiOutput("exportNeedLabs")),
                   tabPanel("Image", 
                            tags$h4(textOutput("canYouLabel")),
                            uiOutput("img"),

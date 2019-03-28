@@ -178,9 +178,24 @@ shinyServer(function(input, output) {
   
   output$getDatToLab <- renderTable({
     req(input$cont)
-    candidate_set <- findDataToLabel(candidate_set)
+    candidate_set <<- findDataToLabel(candidate_set)
     candidate_set_table <- candidate_set %>% select(image, max_probs)
     return(candidate_set_table[1:10,])
+  })
+  
+  output$exportNeedLabs <- renderUI({
+    req(input$cont)
+    actionButton("exportDNL", "Export")
+  })
+  
+  output$numToExport <- renderUI({
+    req(input$cont)
+    selectInput("exportNum", "Please select the number of images you'd like to label", 
+                choices = c(1:nrow(candidate_set)))
+  })
+  
+  observeEvent(input$exportDNL, {
+    write_csv(candidate_set[1:input$exportNum,], "Data_Needs_Labs.csv")
   })
   
   output$canYouLabel <- renderText({
@@ -190,7 +205,7 @@ shinyServer(function(input, output) {
   
   output$img <- renderUI({
     req(input$cont)
-    img_file <- str_c("malaria_images/", candidate_set$image[1])
+    img_file <- str_c("images/", candidate_set$image[1])
     tags$img(src = img_file, height=250, width=250)
   })
   
