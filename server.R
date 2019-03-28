@@ -19,6 +19,7 @@ imCol <- NULL
 labCol <- NULL
 RND <- 0
 tab <- tibble(ROUND = NA, ACCURACY = NA)
+files <- NULL
 
 
 shinyServer(function(input, output) {
@@ -34,13 +35,21 @@ shinyServer(function(input, output) {
                            "text/comma-separated-values,text/plain",
                            ".csv"))  
     } else if (input$init == "No") {
-      fileInput("file1", "Choose Directory with Images",
-                multiple = TRUE,
-                accept = c("image/.png", "image/.jpeg")) 
+      files <<- list.files("www/images")
+      if (length(files) > 0) {
+        selectInput("images", str_c("Is this one of your images: ", files[[1]]),
+                    choices = c("Yes", "No"))  
+      } else {
+        return("No Image Files Detected in folder www/images")
+      }
     }
   })
   
-  # Creates the table
+  #####
+  ##### SECTION 1: IF (or once) THEY HAVE FEATURIZED DATA 
+  #####
+  
+  # Creates the sidebar table of first five featurized datapoints
   output$table <- renderTable({
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
@@ -231,6 +240,32 @@ shinyServer(function(input, output) {
     req(input$save)
     return("Press Continue (on left side bar) to enter next round, then Generate Model to
            generate a new model with newly labeled data.")
+  })
+  
+  
+  ####
+  #### SECTION 2: IF THEY DON'T HAVE FEATURIZED DATA
+  ####
+  
+  output$detectImages <- renderText({
+    req(input$images)
+    if (input$images == "Yes") {
+      numImg <- length(files)
+      return(str_c("You have ", numImg, " images"))  
+    } else {
+      return("Please check directory folder for www/images path and add images to
+             www/images folder.")
+    }
+  })
+  
+  output$featurize <- renderUI({
+    req(input$images == "Yes")
+    actionButton("featurize", "Featurize")
+  })
+  
+  output$info <- renderUI({
+    req(input$images)
+    
   })
   
 })

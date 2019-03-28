@@ -80,3 +80,7 @@ df <- df %>% mutate(label = factor(label))
 levels(df$label)
 ```
 
+```{r}
+list.files("www/images")
+```
+

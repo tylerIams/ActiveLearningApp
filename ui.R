@@ -22,6 +22,8 @@ shinyUI(fluidPage(
                            c("Yes", "No"), "")),
       uiOutput("file"),
       tableOutput("table"),
+      textOutput("detectImages"),
+      uiOutput("featurize"),
       tags$div(id = "dataSummary",
                tags$h4(textOutput("dfSummary"))),
       uiOutput("continue"), 
@@ -35,26 +37,26 @@ shinyUI(fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-      tabsetPanel(type = "tabs",
-                  tabPanel("Plot", 
-                           tags$h3(textOutput("acc")),
-                           plotOutput("round"),
-                           uiOutput("slider"),
-                           hr(),
-                           uiOutput("afterPlot")
-                           ),
-                  tabPanel("Least Confident Data",
-                           tableOutput("getDatToLab"),
-                           uiOutput("numToExport"),
-                           uiOutput("exportNeedLabs")),
-                  tabPanel("Image", 
-                           tags$h4(textOutput("canYouLabel")),
-                           uiOutput("img"),
-                           uiOutput("applyLabel"),
-                           uiOutput("saveLabel"),
-                           tags$h3(textOutput("saveSuccessful")),
-                           tags$h4(textOutput("goToNextRound")))
-                  )
+        tabsetPanel(type = "tabs",
+                    tabPanel("Plot", 
+                             tags$h3(textOutput("acc")),
+                             plotOutput("round"),
+                             uiOutput("slider"),
+                             hr(),
+                             uiOutput("afterPlot")
+                    ),
+                    tabPanel("Least Confident Data",
+                             tableOutput("getDatToLab"),
+                             uiOutput("numToExport"),
+                             uiOutput("exportNeedLabs")),
+                    tabPanel("Image", 
+                             tags$h4(textOutput("canYouLabel")),
+                             uiOutput("img"),
+                             uiOutput("applyLabel"),
+                             uiOutput("saveLabel"),
+                             tags$h3(textOutput("saveSuccessful")),
+                             tags$h4(textOutput("goToNextRound")))
+        )
       )
     )
 
