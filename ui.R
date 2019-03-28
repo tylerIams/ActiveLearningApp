@@ -40,6 +40,7 @@ shinyUI(fluidPage(
                            tags$h3(textOutput("acc")),
                            plotOutput("round"),
                            uiOutput("slider"),
+                           hr(),
                            uiOutput("afterPlot")
                            ),
                   tabPanel("Least Confident Data",
