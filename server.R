@@ -61,6 +61,7 @@ shinyServer(function(input, output) {
       imCol <<- TRUE
     } else {
       pt2 <- str_c("Your data does not contain an image column called image.")
+      imCol <<- FALSE
     }
     pt3 <- NULL
     if ("label" %in% colnames(df)) {
@@ -69,6 +70,7 @@ shinyServer(function(input, output) {
     }
     else {
       pt3 <- str_c("Your data does not contain a column of labels called label.")
+      labCol <<- FALSE
     }
     fin <- str_c(pt1, pt2, pt3, sep = " ")
     return(fin)
@@ -128,31 +130,22 @@ shinyServer(function(input, output) {
   
   output$labelTextInfo <- renderText({
     req(input$continue)
-    times <- input$reset_input
-    div(id = letters[(times %% length(letters)) + 1],
-        sel <- df %>% select(input$label) %>% na.omit(),
-        num <- nrow(sel),
-        return(str_c("Column ", input$label, " will be used as your labels.  
-                 This has ", num, " labels."))
-        )
+        sel <- df %>% select(input$label) %>% na.omit()
+        num <- nrow(sel)
+        return(str_c("Use: ", input$label, "  This has ", num, " labels."))
   })
   
   output$imageTextInfo <- renderText({
     req(input$continue)
-    times <- input$reset_input
-    div(id = letters[(times %% length(letters)) + 1],
-        sel <- df %>% select(input$image) %>% na.omit(),
-        num <- nrow(sel),
-        return(str_c("Column ", input$image, " has your image files.  
+        sel <- df %>% select(input$image) %>% na.omit()
+        num <- nrow(sel)
+        return(str_c("Column ", input$image, " will reference your image files.  
                  This has ", num, " images."))
-    )
   })
   
   output$genMod <- renderUI({
     req(input$continue)
     label <- str_c(input$label)
-    active_set <<- df %>% na.omit()
-    candidate_set <<- df %>% filter(is.na(label) == TRUE)
     actionButton("mod", "Generate Model")
   })
   
@@ -167,6 +160,10 @@ shinyServer(function(input, output) {
   
   output$round <- renderPlot({
     req(input$mod)
+    colnames(df)[which(colnames(df)==input$label)] <<- "label"
+    colnames(df)[which(colnames(df)==input$image)] <<- "image"
+    active_set <<- df %>% na.omit()
+    candidate_set <<- df %>% filter(is.na(label) == TRUE)
     temp <- createModels(active_set, input$lambda, RND)
     tab <<- tab %>% filter(ROUND < RND)
     tab <<- rbind(tab, temp) %>% na.omit()

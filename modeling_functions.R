@@ -21,6 +21,8 @@ createModels <- function(active_set, lambda, ROUND) {
   x_train <- x_train[,-1]
   y_train <- fold1$label
   
+  print(str_c("label: ", fold1$label))
+  
   #Create the first model with fold1 as train and fold2 as test
   active_model <<- glmnet(x_train, y_train, alpha=0.0, 
                          lambda=lambda,
