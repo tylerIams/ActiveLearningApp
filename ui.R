@@ -21,6 +21,7 @@ shinyUI(fluidPage(
       tags$h4(radioButtons("init", "Do you have featurized data?",
                            c("Yes", "No"), "")),
       uiOutput("file"),
+      uiOutput("showImg"),
       tableOutput("table"),
       textOutput("detectImages"),
       uiOutput("featurize"),

@@ -37,12 +37,18 @@ shinyServer(function(input, output) {
     } else if (input$init == "No") {
       files <<- list.files("www/images")
       if (length(files) > 0) {
-        selectInput("images", str_c("Is this one of your images: ", files[[1]]),
+        selectInput("images", str_c("Is this one of your images: "),
                     choices = c("Yes", "No"))  
       } else {
         return("No Image Files Detected in folder www/images")
       }
     }
+  })
+  
+  output$showImg <- renderUI({
+    req(input$init == "No")
+    img_file <- str_c("images/", files[[1]])
+    tags$img(src = img_file, height=250, width=250)
   })
   
   #####
