@@ -59,6 +59,7 @@ shinyServer(function(input, output) {
   output$table <- renderTable({
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
+    df<<- df[-1]
     if ("label" %in% colnames(df)) {
         df <<- df %>% mutate(label = factor(label))
       }
@@ -146,7 +147,7 @@ shinyServer(function(input, output) {
   output$labelTextInfo <- renderText({
     req(input$continue)
         sel <- df %>% select(input$label) %>% na.omit()
-        num <- nrow(sel)
+        num <- ncol(sel)
         return(str_c("Use: ", input$label, "  This has ", num, " labels."))
   })
   
