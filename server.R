@@ -10,6 +10,9 @@ library(tidyverse)
 library(png)
 library(shinyjs)
 source("modeling_functions.R")
+library(reticulate)
+use_python(" /Users/user/anaconda3/envs/nlp/bin/python")
+source_python("FeaturizeImages.py")
 
 df <- NULL
 label <- NULL
@@ -52,7 +55,7 @@ shinyServer(function(input, output) {
   })
   
   #####
-  ##### SECTION 1: IF (or once) THEY HAVE FEATURIZED DATA 
+  ##### SECTION 1: IF (or once) THEY HAVE FEATURIZED DATA   ##### 
   #####
   
   # Creates the sidebar table of first five featurized datapoints
@@ -251,7 +254,7 @@ shinyServer(function(input, output) {
   
   
   ####
-  #### SECTION 2: IF THEY DON'T HAVE FEATURIZED DATA
+  #### SECTION 2: IF THEY DON'T HAVE FEATURIZED DATA   #### 
   ####
   
   output$detectImages <- renderText({
@@ -268,6 +271,14 @@ shinyServer(function(input, output) {
   output$featurize <- renderUI({
     req(input$images == "Yes")
     actionButton("featurize", "Featurize")
+  })
+  
+  observeEvent(input$featurize, {
+    data_featurized <<- feat_data()
+  })
+  output$Featurize <- renderTable({
+    req(input$featurize)
+    return(data_featurized[1:2,])
   })
   
   output$info <- renderUI({
