@@ -124,8 +124,8 @@ shinyServer(function(input, output) {
     req(input$continue)
     RND <<- RND + 1
     if (labCol == FALSE) {
-      selectInput("label", "Please Select the Column Containing Labels: ", 
-                  choices = colnames(df))
+      selectizeInput("label", "Please Select the Column Containing Labels: ", 
+                  choices = colnames(df), options = list(maxOptions = ncol(df)))
     } else {
       selectInput("label", "Column Containing Labels: ", 
                   choices = "label")
