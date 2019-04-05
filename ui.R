@@ -25,6 +25,7 @@ shinyUI(fluidPage(
       tableOutput("table"),
       textOutput("detectImages"),
       uiOutput("featurize"),
+      uiOutput("Featurize"),
       tags$div(id = "dataSummary",
                tags$h4(textOutput("dfSummary"))),
       uiOutput("continue"), 
