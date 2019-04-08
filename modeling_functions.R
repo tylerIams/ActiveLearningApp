@@ -2,7 +2,8 @@
 ####This script is for active learning modeling
 active_model <- NULL
 y <- 0
-
+train <<- NULL
+test <<- NULL
 ####This function takes the active set as a parameter and
 ####creates two folds, it creates a ridge regression (glmnet)
 ####model with each fold, uses the opposite fold to predict
@@ -10,26 +11,31 @@ y <- 0
 ###It logs the accuracy in a table (acc_tab) and returns it.
 createModels <- function(active_set, lambda, ROUND) {
   
+  if (y == 0) {
+    #Divide the active set into test and train
+    train_ints <- sample(1:nrow(active_set), nrow(active_set)/2)
+    train <<- active_set[train_ints,]
+    test <<- active_set[-train_ints,]
+  } else {
+    train <<- active_set
+  }
+  
   y <<- y + 1
-  #Divide the active set into folds
-  fold1 <- sample(1:nrow(active_set), nrow(active_set)/2)
-  fold2 <- active_set[-fold1,]
-  fold1 <- active_set[fold1,]
   
   #Create the training set with fold1
-  x_train <- model.matrix(~ ., select(fold1, -image, -label))
+  x_train <- model.matrix(~ ., select(train, -image, -label))
   x_train <- x_train[,-1]
-  y_train <- fold1$label
+  y_train <- train$label
   
-  print(str_c("label: ", fold1$label))
+  print(str_c("label: ", train$label))
   
   #Create the first model with fold1 as train and fold2 as test
   active_model <<- glmnet(x_train, y_train, alpha=0.0, 
                          lambda=lambda,
                          family="multinomial")
-  x_test <- model.matrix(~ ., select(fold2, -image, -label))
+  x_test <- model.matrix(~ ., select(test, -image, -label))
   x_test <- x_test[,-1]
-  y_test <- fold2$label
+  y_test <- test$label
   preds <- predict(active_model, newx = x_test, type="class")
   
   tab <- table(preds, y_test)
@@ -43,33 +49,7 @@ createModels <- function(active_set, lambda, ROUND) {
   }
   print(acc1)
   
-  #Create the training set with fold2
-  x_train <- model.matrix(~ ., select(fold2, -image, -label))
-  x_train <- x_train[,-1]
-  y_train <- fold2$label
-  
-  #Create the second model with fold2 as train and fold1 as test
-  active_model <- glmnet(x_train, y_train, alpha=0.0, 
-                         lambda=0.1,
-                         family="multinomial")
-  x_test <- model.matrix(~ ., select(fold1, -image, -label))
-  x_test <- x_test[,-1]
-  y_test <- fold1$label
-  preds <- predict(active_model, newx = x_test, type="class")
-  
-  tab <- table(preds, y_test)
-  sum <- 0
-  acc <- -1.0
-  if (nrow(tab) == ncol(tab)) {
-    for (x in 1:nrow(tab)) {
-      sum = sum + tab[x,x]
-    }
-    acc2 <- sum/sum(tab)
-  }
-  print(acc2)
-  acc <- (acc1 + acc2) / 2
-  
-  acc_tab <- tibble(ROUND = ROUND, ACCURACY = acc)
+  acc_tab <- tibble(ROUND = ROUND, ACCURACY = acc1)
   
   return(acc_tab)
 }
