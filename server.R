@@ -8,10 +8,13 @@
 library(shiny)
 library(tidyverse)
 library(png)
+library(DBI)
+library(RSQLite)
 library(shinyjs)
 source("modeling_functions.R")
 library(reticulate)
-use_python(" /Users/user/anaconda3/envs/nlp/bin/python")
+##use_python(" /Users/user/anaconda3/envs/nlp/bin/python")
+use_condaenv("tensorflow")
 source_python("FeaturizeImages.py")
 
 df <- NULL
@@ -38,19 +41,19 @@ shinyServer(function(input, output) {
                            "text/comma-separated-values,text/plain",
                            ".csv"))  
     } else if (input$init == "No") {
-      files <<- list.files("www/images")
+      files <<- list.files("www/UNLABELED")
       if (length(files) > 0) {
         selectInput("images", str_c("Is this one of your images: "),
                     choices = c("Yes", "No"))  
       } else {
-        return("No Image Files Detected in folder www/images")
+        return("No Image Files Detected in folder www/UNLABELED")
       }
     }
   })
   
   output$showImg <- renderUI({
     req(input$init == "No")
-    img_file <- str_c("images/", files[[1]])
+    img_file <- str_c("UNLABELED/", files[[1]])
     tags$img(src = img_file, height=250, width=250)
   })
   
@@ -65,7 +68,8 @@ shinyServer(function(input, output) {
     df<<- df[-1]
     if ("label" %in% colnames(df)) {
         df <<- df %>% mutate(label = factor(label))
-      }
+    }
+  
     num <- ncol(df)
     sec <- num -1
     return(df[1:5,sec:num])
@@ -261,10 +265,10 @@ shinyServer(function(input, output) {
     req(input$images)
     if (input$images == "Yes") {
       numImg <- length(files)
-      return(str_c("You have ", numImg, " images"))  
+      return(str_c("You have ", numImg, " unlabeled images"))  
     } else {
-      return("Please check directory folder for www/images path and add images to
-             www/images folder.")
+      return("Please check directory folder for www/UNLABELED path and add images to
+             www/UNLABELED folder.")
     }
   })
   
@@ -278,7 +282,7 @@ shinyServer(function(input, output) {
   })
   output$Featurize <- renderTable({
     req(input$featurize)
-    return(data_featurized[1:2,])
+    return(data_featurized[1:10,(ncol(data_featurized)-4):ncol(data_featurized)])
   })
   
   output$info <- renderUI({
