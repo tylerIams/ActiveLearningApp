@@ -18,7 +18,7 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
-      tags$h4(radioButtons("init", "Do you have featurized data?",
+      tags$h4(radioButtons("init", "Are images featurized properly?",
                            c("Yes", "No"), "")),
       uiOutput("file"),
       uiOutput("showImg"),
@@ -26,8 +26,6 @@ shinyUI(fluidPage(
       textOutput("detectImages"),
       uiOutput("featurize"),
       uiOutput("Featurize"),
-      tags$div(id = "dataSummary",
-               tags$h4(textOutput("dfSummary"))),
       uiOutput("continue"), 
       hr(),
       uiOutput("label"),
@@ -39,7 +37,7 @@ shinyUI(fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-        tabsetPanel(type = "tabs",
+        tabsetPanel(id = "tabactice", type = "tabs",
                     tabPanel("Plot", 
                              tags$h3(textOutput("acc")),
                              plotOutput("round"),
@@ -57,7 +55,14 @@ shinyUI(fluidPage(
                              uiOutput("applyLabel"),
                              uiOutput("saveLabel"),
                              tags$h3(textOutput("saveSuccessful")),
-                             tags$h4(textOutput("goToNextRound")))
+                             tags$h4(textOutput("goToNextRound"))),
+                    tabPanel("View Dataset",
+                             tableOutput("getView"), 
+                             tags$h4(textOutput("dfSummary"))
+                             ),
+                    tabPanel("View Featurized dataset",
+                             tableOutput("getViewfeaturized")
+                             )
         )
       )
     )

@@ -35,12 +35,32 @@ shinyServer(function(input, output) {
   output$file <- renderUI({
     req(input$init)
     if (input$init == "Yes") {
+      hideTab(inputId = "tabactice", target = "Plot")
+      hideTab(inputId = "tabactice", target = "Least Confident Data")
+      hideTab(inputId = "tabactice", target = "Image") 
+      hideTab(inputId = "tabactice", target = "View Featurized dataset") 
+      showTab(inputId = "tabactice", target = "View Dataset") 
+      
+      removeUI(
+        selector = "#featurize"
+      )
+      removeUI(
+        selector = "#detectImages"
+      )
       fileInput("file1", "Choose CSV File",
                 multiple = FALSE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
                            ".csv"))  
     } else if (input$init == "No") {
+      # removeUI(
+      #   selector = "#tabactice"
+      # )
+      hideTab(inputId = "tabactice", target = "Plot")
+      hideTab(inputId = "tabactice", target = "Least Confident Data")
+      hideTab(inputId = "tabactice", target = "Image")
+      hideTab(inputId = "tabactice", target = "View Dataset") 
+      showTab(inputId = "tabactice", target = "View Featurized dataset") 
       files <<- list.files("www/UNLABELED")
       if (length(files) > 0) {
         selectInput("images", str_c("Is this one of your images: "),
@@ -54,7 +74,7 @@ shinyServer(function(input, output) {
   output$showImg <- renderUI({
     req(input$init == "No")
     img_file <- str_c("UNLABELED/", files[[1]])
-    tags$img(src = img_file, height=250, width=250)
+    tags$img(src = img_file, height=250, width=200)
   })
   
   #####
@@ -62,14 +82,15 @@ shinyServer(function(input, output) {
   #####
   
   # Creates the sidebar table of first five featurized datapoints
-  output$table <- renderTable({
+  
+  output$getView <- renderTable({
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
     df<<- df[-1]
     if ("label" %in% colnames(df)) {
-        df <<- df %>% mutate(label = factor(label))
+      df <<- df %>% mutate(label = factor(label))
     }
-  
+    
     num <- ncol(df)
     sec <- num -1
     return(df[1:5,sec:num])
@@ -95,7 +116,7 @@ shinyServer(function(input, output) {
       pt3 <- str_c("Your data does not contain a column of labels called label.")
       labCol <<- FALSE
     }
-    fin <- str_c(pt1, pt2, pt3, sep = " ")
+    fin <- str_c(pt1, pt2, pt3, sep = "\n")
     return(fin)
   })
   
@@ -105,9 +126,7 @@ shinyServer(function(input, output) {
   })
   
   observeEvent(input$continue, {
-    removeUI(
-      selector = "#dataSummary"
-    )
+    hideTab(inputId = "tabactice", target = "View Dataset") 
   })
   
   observeEvent(input$continue, {
@@ -122,11 +141,6 @@ shinyServer(function(input, output) {
     )
   })
   
-  observeEvent(input$continue, {
-    removeUI(
-      selector = "#table"
-    )
-  })
   
   output$label <- renderUI({
     req(input$continue)
@@ -165,7 +179,11 @@ shinyServer(function(input, output) {
         return(str_c("Column ", input$image, " will reference your image files.  
                  This has ", num, " images."))
   })
-  
+  observeEvent(input$mod, {
+    showTab(inputId = "tabactice", target = "Plot")
+    showTab(inputId = "tabactice", target = "Least Confident Data")
+    showTab(inputId = "tabactice", target = "Image") 
+  })
   output$genMod <- renderUI({
     req(input$continue)
     label <- str_c(input$label)
@@ -176,9 +194,9 @@ shinyServer(function(input, output) {
     req(input$mod)
     sliderInput("lambda",
                 "Choose Lambda:",
-                min = .01,
-                max = .75,
-                value = .05)
+                min = .001,
+                max = 1,
+                value = .005)
   })
   
   output$round <- renderPlot({
@@ -260,6 +278,7 @@ shinyServer(function(input, output) {
   ####
   #### SECTION 2: IF THEY DON'T HAVE FEATURIZED DATA   #### 
   ####
+
   
   output$detectImages <- renderText({
     req(input$images)
@@ -280,9 +299,9 @@ shinyServer(function(input, output) {
   observeEvent(input$featurize, {
     data_featurized <<- feat_data()
   })
-  output$Featurize <- renderTable({
+  output$getViewfeaturized <- renderTable({
     req(input$featurize)
-    return(data_featurized[1:10,(ncol(data_featurized)-4):ncol(data_featurized)])
+    return(data_featurized[1:10,(ncol(data_featurized)-2):ncol(data_featurized)])
   })
   
   output$info <- renderUI({
