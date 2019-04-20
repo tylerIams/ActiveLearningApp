@@ -13,11 +13,13 @@ library(RSQLite)
 library(shinyjs)
 source("modeling_functions.R")
 library(reticulate)
-##use_python(" /Users/user/anaconda3/envs/nlp/bin/python")
+##use_python(" /Users/user/anaconda3/bin")
 use_condaenv("tensorflow")
 source_python("FeaturizeImages.py")
 
 df <- NULL
+df_labeled <- NULL
+df_unlabeled <- NULL
 label <- NULL
 active_set <- NULL
 candidate_set <- NULL
@@ -39,6 +41,7 @@ shinyServer(function(input, output) {
       hideTab(inputId = "tabactice", target = "Least Confident Data")
       hideTab(inputId = "tabactice", target = "Image") 
       hideTab(inputId = "tabactice", target = "View Featurized dataset") 
+      hideTab(inputId = "tabactice", target = "Size of Labeled Data") 
       showTab(inputId = "tabactice", target = "View Dataset") 
       
       removeUI(
@@ -60,6 +63,7 @@ shinyServer(function(input, output) {
       hideTab(inputId = "tabactice", target = "Least Confident Data")
       hideTab(inputId = "tabactice", target = "Image")
       hideTab(inputId = "tabactice", target = "View Dataset") 
+      hideTab(inputId = "tabactice", target = "Size of Labeled Data")
       showTab(inputId = "tabactice", target = "View Featurized dataset") 
       files <<- list.files("www/UNLABELED")
       if (length(files) > 0) {
@@ -87,10 +91,13 @@ shinyServer(function(input, output) {
     req(input$file1)
     df <<- read.csv(input$file1$datapath)
     df<<- df[-1]
+    
     if ("label" %in% colnames(df)) {
       df <<- df %>% mutate(label = factor(label))
+      
     }
-    
+    df_unlabeled <<- subset(df, is.na(df$label))
+    df_labeled <<- subset(df, !(is.na(df$label)))
     num <- ncol(df)
     sec <- num -1
     return(df[1:5,sec:num])
@@ -119,11 +126,11 @@ shinyServer(function(input, output) {
     fin <- str_c(pt1, pt2, pt3, sep = "\n")
     return(fin)
   })
-  
-  output$continue <- renderUI({
+  output$continueTolabel <- renderUI({
     req(input$file1)
     actionButton("continue", "Continue")
   })
+  
   
   observeEvent(input$continue, {
     hideTab(inputId = "tabactice", target = "View Dataset") 
@@ -179,11 +186,49 @@ shinyServer(function(input, output) {
         return(str_c("Column ", input$image, " will reference your image files.  
                  This has ", num, " images."))
   })
-  observeEvent(input$mod, {
-    showTab(inputId = "tabactice", target = "Plot")
-    showTab(inputId = "tabactice", target = "Least Confident Data")
-    showTab(inputId = "tabactice", target = "Image") 
+  
+  output$confirmSelection <- renderUI({
+    req(input$continue)
+    label <- str_c(input$label)
+    actionButton("confirm", "Confirm Selection")
   })
+  
+  observeEvent(input$confirm, {
+    showTab(inputId = "tabactice", target = "Size of Labeled Data")
+    
+    
+    removeUI(
+        selector = "#labelTextInfo"
+      )
+    removeUI(
+      selector = "#confirmSelection"
+    )
+    removeUI(
+      selector = "#imageTextInfo"
+    )
+    removeUI(
+      selector = "#image"
+    )
+    removeUI(
+      selector = "#label"
+    )
+  })
+  if (TRUE) {
+    output$sizeInfo <- renderText({
+    req(input$confirm)
+    
+    return(str_c("You need at least 170 labaled images to begin the Active Selection"))
+    })} else{
+      output$StartActice <- renderUI({
+        actionButton("startLabel", "Start Labeling")
+      })
+  }
+  
+  output$StartLabeling <- renderUI({
+    req(input$confirm)
+    actionButton("startLabel", "Start Labeling")
+  })
+  
   output$genMod <- renderUI({
     req(input$continue)
     label <- str_c(input$label)
@@ -238,41 +283,95 @@ shinyServer(function(input, output) {
   observeEvent(input$exportDNL, {
     write_csv(candidate_set[1:input$exportNum,], "Data_Needs_Labs.csv")
   })
-  
-  output$canYouLabel <- renderText({
-    req(input$cont)
-    return(str_c("Can you label this image? "))
+  observeEvent(input$startLabel, {
+    hideTab(inputId = "tabactice", target = "Size of Labeled Data")
+    #showTab(inputId = "tabactice", target = "Image")
+    img_file_name <<- str_c("UNLABELED/", str_replace(as.character(df_unlabeled$image[1]),"www/UNLABELED/",""))
+    
   })
   
-  output$img <- renderUI({
-    req(input$cont)
-    img_file <- str_c("images/", candidate_set$image[1])
-    tags$img(src = img_file, height=250, width=250)
+  
+  showimages <- function(inState) {
+  
+    observeEvent(inState, {
+        showTab(inputId = "tabactice", target = "Image")
+    })
+    
+    output$canYouLabel <- renderText({
+      req(inState)
+      return(str_c("Can you label this image? "))
+    })
+    
+    output$img <- renderUI({
+      req(inState)
+      tags$img(src = img_file_name, height=250, width=250)
+    })
+    output$cheatLabeling <- renderText({
+      req(inState)
+      return(img_file_name)
+    })
+    output$applyLabel <- renderUI({
+      req(inState)
+      selectInput("newLab", "Please Select a label: ", choices = levels(df$label))
+    })
+    
+    output$saveLabel <- renderUI({
+      req(input$newLab)
+      actionButton("save", "Apply Label")
+    })
+    
+    output$saveSuccessful <- renderText({
+      req(input$save)
+      img_file <- str_c("www/", img_file_name)
+      df$label[df$image == img_file] <<- input$newLab
+      df_unlabeled <<- subset(df, is.na(df$label))
+      df_labeled <<- subset(df, !(is.na(df$label)))
+      write_csv(df, "final_data_test.csv")
+      return("Label Saved Successfully")
+    })
+    observeEvent(input$save, {
+      removeUI(
+        selector = "#save"
+      )
+    })
+
+    output$goToNextRound <- renderUI({
+      req(input$save)
+      actionButton("nextLabel", "Label Next Image")
+    })
+  } 
+  observeEvent(input$startLabel, {
+    showimages(input$startLabel)
+    
   })
   
-  output$applyLabel <- renderUI({
-    req(input$cont)
-    selectInput("newLab", "Please Select a label: ", choices = levels(df$label))
-  })
   
-  output$saveLabel <- renderUI({
-    req(input$newLab)
-    actionButton("save", "Apply Label")
-  })
-  
-  output$saveSuccessful <- renderText({
-    req(input$save)
-    img_file <- str_c(candidate_set$image[1])
-    df$label[df$image == img_file] <<- input$newLab
-    write_csv(df, "input$file1.csv")
-    return("Label Saved Successfully")
-  })
-  
-  output$goToNextRound <- renderText({
-    req(input$save)
-    return("Press Continue (on left side bar) to enter next round, then Generate Model to
-           generate a new model with newly labeled data.")
-  })
+    observeEvent(input$nextLabel, {
+      # while (TRUE ){
+        #   removeUI(
+        #     selector = "#img"
+        #   )
+        # removeUI(
+        #   selector = "#applyLabel"
+        # )
+        # removeUI(
+        #   selector = "#goToNextRoun"
+        # )
+        # removeUI(
+        #   selector = "#saveSuccessful"
+        # )
+        # removeUI(
+        #   selector = "#saveLabel"
+        # )
+        # removeUI(
+        #   selector = "#saveLabel"
+        # )
+        hideTab(inputId = "tabactice", target = "Image")
+        img_file_name <<- str_c("UNLABELED/", str_replace(as.character(df_unlabeled$image[1]),"www/UNLABELED/",""))
+        showimages(input$nextLabel)
+        #}
+    })
+
   
   
   ####

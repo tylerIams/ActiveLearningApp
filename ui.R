@@ -32,6 +32,7 @@ shinyUI(fluidPage(
       uiOutput("image"),
       tags$h4(textOutput("labelTextInfo")),
       tags$h4(textOutput("imageTextInfo")),
+      uiOutput("confirmSelection"),
       uiOutput("genMod")
     ),
     
@@ -52,17 +53,33 @@ shinyUI(fluidPage(
                     tabPanel("Image", 
                              tags$h4(textOutput("canYouLabel")),
                              uiOutput("img"),
+                             hr(),
+                             uiOutput("cheatLabeling"),
+                             hr(),
                              uiOutput("applyLabel"),
                              uiOutput("saveLabel"),
                              tags$h3(textOutput("saveSuccessful")),
-                             tags$h4(textOutput("goToNextRound"))),
+                             hr(),
+                             uiOutput("goToNextRound")),
                     tabPanel("View Dataset",
-                             tableOutput("getView"), 
-                             tags$h4(textOutput("dfSummary"))
+                             tableOutput("getView"),
+                             hr(),
+                             tags$h4(textOutput("dfSummary")),
+                             hr(),
+                             hr(),
+                             uiOutput("continueTolabel")
                              ),
                     tabPanel("View Featurized dataset",
                              tableOutput("getViewfeaturized")
-                             )
+                             ),
+                    tabPanel("Size of Labeled Data",
+                             tags$h4(textOutput("sizeCheck")),
+                             uiOutput("sizeInfo"),
+                             hr(),
+                             hr(),
+                             uiOutput("StartLabeling"),
+                             uiOutput("StartActice")
+                    )
         )
       )
     )
