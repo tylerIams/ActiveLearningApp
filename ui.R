@@ -32,8 +32,7 @@ shinyUI(fluidPage(
       uiOutput("image"),
       tags$h4(textOutput("labelTextInfo")),
       tags$h4(textOutput("imageTextInfo")),
-      uiOutput("confirmSelection"),
-      uiOutput("genMod")
+      uiOutput("confirmSelection")
     ),
     
     # Show a plot of the generated distribution
@@ -72,10 +71,20 @@ shinyUI(fluidPage(
                     tabPanel("View Featurized dataset",
                              tableOutput("getViewfeaturized")
                              ),
+                    tabPanel("Active Learning Labeling",
+                             tags$h4("Can you label this image?"),
+                             uiOutput("showImage"),
+                             uiOutput("cheatLabeling2"),
+                             uiOutput("applyAL_Label"),
+                             uiOutput("saveAL_Label"),
+                             uiOutput("ALsaveSuccessful"),
+                             uiOutput("goToNextRound2")
+                             ),
                     tabPanel("Size of Labeled Data",
                              tags$h4(textOutput("sizeCheck")),
                              uiOutput("sizeInfo"),
                              hr(),
+                             uiOutput("numLabelsInfo"),
                              hr(),
                              uiOutput("StartLabeling"),
                              uiOutput("StartActice")
