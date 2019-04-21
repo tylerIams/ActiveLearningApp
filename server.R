@@ -371,6 +371,8 @@ shinyServer(function(input, output) {
             colnames(df)[which(colnames(df)==input$image)] <<- "image"
             active_set <<- df %>% na.omit()
             candidate_set <<- df %>% filter(is.na(label) == TRUE)
+            rem_data <- nrow(candidate_set)
+            print(str_c("Remaining Unlabeled data: ", rem_data))
             print("Calling create models")
             temp <- createModels(active_set, input$lambda, RND)
             tab <<- tab %>% filter(ROUND < RND)
@@ -383,7 +385,17 @@ shinyServer(function(input, output) {
         
         output$afterPlot <- renderUI({
           req(input$mod & INNERRND == RND)
-          actionButton("cont", "Get Data To Label")
+          rem_data <- df %>% filter(is.na(label) == TRUE) %>% count()
+          if (rem_data == 0) {
+            tags$div(
+              tags$p("You have no more remaining unlabeled data!"),
+              actionButton("finish", "Finish Active Learning")
+            )
+          } else {
+            tags$div(
+              actionButton("cont", "Get Data To Label")
+            )
+          }
         })
         
         observeEvent(input$cont, {
@@ -450,7 +462,11 @@ shinyServer(function(input, output) {
       
     } ### END OF ACTIVELY LEARN FUNCTION
     
-  
+    
+    #####                                                      #####
+    #####  THE REACTIVE FOR ACTIVE LEARNING TO WORK CORRECTLY  #####
+    #####                                                      #####
+    
     # Define reactiveValue
     rv <- reactiveValues(selected = NULL)
     
@@ -459,11 +475,70 @@ shinyServer(function(input, output) {
       rv$selected <- input$mod
     })
     
-    # 2. clear selection if different filter is chosen
+    # 2. clear input$mod after continueActiveLearning is pressed
     observeEvent(input$continueActiveLearning, {
       rv$selected <- NULL
     })
     
+    #####                                                      #####
+    #####                                                      #####
+    
+    
+    #####                                                      #####
+    #####               FINISHING THE PROCESS                  #####
+    #####                                                      #####
+    
+    observeEvent(input$finish, {
+      hideTab(inputId = "tabactice", target = "Least Confident Data")
+      hideTab(inputId = "tabactice", target = "Active Learning Labeling")
+      removeUI(
+        selector = "#genMod"
+      )
+      finalize()
+    })
+    
+    finalize <- function() {
+     
+       output$finished_now_Export <- renderUI({
+        tags$div(style = 'padding : 40px',
+                 tags$h3("Would you like to export your final plot, table and data?"),
+                 actionButton("exportAll", "Export All")
+                 )
+      })
+      
+       output$finalize <- renderUI({
+         write_csv(df, "FINAL_ACTIVE_LEARNING_DATA.csv")
+         write_csv(tab, "FINAL_ACCURACY_TABLE.csv")
+         plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
+         ggsave("FINAL_PLOT.png", plot = plot, width = 7, height = 5, units = "cm")
+         tags$div(style = 'padding : 40px',
+                  tags$h3("Export Successful"),
+                  tags$p("Please check your project directory for 3 files:"),
+                  tags$p("1. FINAL_ACTIVE_LEARNING_DATA.csv"),
+                  tags$p("2. FINAL_ACCURACY_TABLE.csv"),
+                  tags$p("3. FINAL_PLOT.png")
+         )
+       })
+       
+       observeEvent(input$exportAll, {
+         removeUI(
+           selector = "#round"
+         )
+         removeUI(
+           selector = "#acc"
+         )
+         removeUI(
+           selector = "#slider"
+         )
+         removeUI(
+           selector = "#afterPlot"
+         )
+       })
+      
+    }
+    
+    #####                                                      #####
+    #####                                                      #####
     
     
     

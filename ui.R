@@ -38,6 +38,8 @@ shinyUI(fluidPage(
     mainPanel(
         tabsetPanel(id = "tabactice", type = "tabs",
                     tabPanel("Plot", 
+                             uiOutput("finished_now_Export"),
+                             uiOutput("finalize"),
                              uiOutput("genMod"),
                              tags$h3(textOutput("acc")),
                              plotOutput("round"),
