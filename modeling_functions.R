@@ -4,6 +4,19 @@ active_model <- NULL
 y <- 0
 train <<- NULL
 test <<- NULL
+acc1 <<- .90
+
+
+## Retrain with external cross validation, 
+## select best lambda from about 20 diff models, use validation set to choose
+## the best lambda value, then let the user label about 10 more images, then run it again.
+##
+
+## Demos --> Whatever classifier you think is interesting?  Fascinated by dermatology dataset?
+## That might be example to use active learning b/c you could use those to train humans or some shit
+## MNist?
+
+
 ####This function takes the active set as a parameter and
 ####creates two folds, it creates a ridge regression (glmnet)
 ####model with each fold, uses the opposite fold to predict
@@ -45,7 +58,7 @@ createModels <- function(active_set, lambda, ROUND) {
     for (x in 1:nrow(tab)) {
       sum = sum + tab[x,x]
     }
-    acc1 <- sum/sum(tab)
+    acc1 <<- sum/sum(tab)
   }
   print(acc1)
   

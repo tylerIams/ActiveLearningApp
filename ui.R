@@ -18,28 +18,27 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
-      tags$h4(radioButtons("init", "Do you have featurized data?",
+      tags$h4(radioButtons("init", "Are images featurized properly?",
                            c("Yes", "No"), "")),
       uiOutput("file"),
       uiOutput("showImg"),
       tableOutput("table"),
       textOutput("detectImages"),
       uiOutput("featurize"),
-      tags$div(id = "dataSummary",
-               tags$h4(textOutput("dfSummary"))),
       uiOutput("continue"), 
       hr(),
       uiOutput("label"),
       uiOutput("image"),
       tags$h4(textOutput("labelTextInfo")),
       tags$h4(textOutput("imageTextInfo")),
-      uiOutput("genMod")
+      uiOutput("confirmSelection")
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-        tabsetPanel(type = "tabs",
+        tabsetPanel(id = "tabactice", type = "tabs",
                     tabPanel("Plot", 
+                             uiOutput("genMod"),
                              tags$h3(textOutput("acc")),
                              plotOutput("round"),
                              uiOutput("slider"),
@@ -53,10 +52,42 @@ shinyUI(fluidPage(
                     tabPanel("Image", 
                              tags$h4(textOutput("canYouLabel")),
                              uiOutput("img"),
+                             hr(),
+                             uiOutput("cheatLabeling"),
+                             hr(),
                              uiOutput("applyLabel"),
                              uiOutput("saveLabel"),
                              tags$h3(textOutput("saveSuccessful")),
-                             tags$h4(textOutput("goToNextRound")))
+                             tags$p(textOutput("numLabelsInfo")),
+                             hr(),
+                             uiOutput("goToNextRound")),
+                    tabPanel("View Dataset",
+                             tableOutput("getView"),
+                             hr(),
+                             tags$h4(textOutput("dfSummary")),
+                             hr(),
+                             hr(),
+                             uiOutput("continueTolabel")
+                             ),
+                    tabPanel("View Featurized dataset",
+                             tableOutput("getViewfeaturized")
+                             ),
+                    tabPanel("Size of Labeled Data",
+                             tags$h4(textOutput("sizeCheck")),
+                             uiOutput("sizeInfo"),
+                             hr(),
+                             hr(),
+                             uiOutput("StartLabeling"),
+                             uiOutput("StartActice")
+                    ),
+                    tabPanel("Active Learning Labeling",
+                             tags$h4("Can you label this image?"),
+                             uiOutput("showImage"),
+                             uiOutput("applyAL_Label"),
+                             uiOutput("saveAL_Label"),
+                             uiOutput("ALsaveSuccessful")
+                             # tags$h4(textOutput("goToNextRound"))
+                    )
         )
       )
     )
