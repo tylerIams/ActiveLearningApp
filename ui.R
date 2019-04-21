@@ -20,6 +20,8 @@ shinyUI(fluidPage(
     sidebarPanel(
       tags$h4(radioButtons("init", "Are images featurized properly?",
                            c("Yes", "No"), "")),
+      uiOutput("exportTraining"),
+      uiOutput("exportedTraining"),
       uiOutput("file"),
       uiOutput("showImg"),
       tableOutput("table"),

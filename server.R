@@ -30,6 +30,7 @@ INNERRND <- 0
 tab <- tibble(ROUND = NA, ACCURACY = NA)
 files <- NULL
 CALL <- 11
+training_set <- NULL
 
 
 shinyServer(function(input, output) {
@@ -320,6 +321,7 @@ shinyServer(function(input, output) {
     #####                                                           #####
     
     
+    
     observeEvent(input$beginActiveLearning, {
       CALL <<- CALL + 1
       RND <<- RND + 1
@@ -430,6 +432,11 @@ shinyServer(function(input, output) {
       output$showImage <- renderUI({
         req(input$cont)
         img_name <- candidate_set$image[1]
+        if (is.null(training_set)) {
+          training_set <<- tibble(Image = img_name)
+        } else {
+          training_set <<- add_row(training_set, Image = img_name)
+        }
         print(str_c("CALL ", CALL))
         print(str_c("Image name: ", img_name))
         img_file <- str_c("UNLABELED/", img_name)
@@ -483,9 +490,37 @@ shinyServer(function(input, output) {
     #####                                                      #####
     #####                                                      #####
     
+
+    #####                                                      #####
+    #####              EXPORT THE TRAINING SET                 #####
+    #####                                                      #####
+    
+    output$exportTraining <- renderUI({
+      req(input$mod)
+      actionButton("exportTrainingSet", "Export Training Set")
+    })
+    
+    observeEvent(input$exportTrainingSet, {
+          output$exportedTraining <- renderUI({
+            req(input$mod)
+            req(input$exportTrainingSet)
+            if (!is.null(training_set)) {
+              write_csv(training_set, "TRAINING_IMAGES.csv")
+              tags$div(
+                tags$h4("Training Images Exported Successfully")
+              )
+            }
+            else {
+              tags$div(
+                tags$h4("Your Training set is Empty, try again after a round of active learning")
+              )
+            }
+          })
+    })
+    
     
     #####                                                      #####
-    #####               FINISHING THE PROCESS                  #####
+    #####       FINISH THE PROCESS - ALL DATA LABELED          #####
     #####                                                      #####
     
     observeEvent(input$finish, {
@@ -507,6 +542,7 @@ shinyServer(function(input, output) {
       })
       
        output$finalize <- renderUI({
+         req(input$exportAll)
          write_csv(df, "FINAL_ACTIVE_LEARNING_DATA.csv")
          write_csv(tab, "FINAL_ACCURACY_TABLE.csv")
          plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
@@ -534,8 +570,9 @@ shinyServer(function(input, output) {
            selector = "#afterPlot"
          )
        })
-      
     }
+    
+    
     
     #####                                                      #####
     #####                                                      #####
@@ -574,7 +611,6 @@ shinyServer(function(input, output) {
   
   output$info <- renderUI({
     req(input$images)
-    
   })
   
 })
