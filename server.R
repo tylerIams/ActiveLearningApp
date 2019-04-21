@@ -26,6 +26,7 @@ candidate_set <- NULL
 imCol <- NULL
 labCol <- NULL
 RND <- 0
+INNERRND <- 0
 tab <- tibble(ROUND = NA, ACCURACY = NA)
 files <- NULL
 CALL <- 11
@@ -321,6 +322,7 @@ shinyServer(function(input, output) {
     
     observeEvent(input$beginActiveLearning, {
       CALL <<- CALL + 1
+      RND <<- RND + 1
       showTab(inputId = "tabactice", target = "Plot")
       hideTab(inputId = "tabactice", target = "Image")
       Actively_Learn()
@@ -329,6 +331,7 @@ shinyServer(function(input, output) {
     observeEvent(input$continueActiveLearning, {
       CALL <<- CALL + 1
       if (CALL == 12) {
+        RND <<- RND + 1
         showTab(inputId = "tabactice", target = "Plot")
         hideTab(inputId = "tabactice", target = "Least Confident Data")
         hideTab(inputId = "tabactice", target = "Active Learning Labeling")
@@ -344,18 +347,16 @@ shinyServer(function(input, output) {
       
       if (CALL == 12) {
         CALL <<- 0
-        print("IN THE REQUIRED MODULO SHIT")
-        RND <<- RND + 1
+        INNERRND <<- INNERRND + 1
         output$genMod <- renderUI({
-          req(input$beginActiveLearning)
           label <- str_c(input$label)
           tags$div( style = 'padding: 20px',
-                    actionButton("mod", "Generate Model")  
+                    actionButton("mod", str_c("Begin Round ", RND))  
           )
         })
         
         output$slider <- renderUI({
-          req(input$mod)
+          req(input$mod & INNERRND == RND)
           sliderInput("lambda",
                       "Choose Lambda:",
                       min = .001,
@@ -364,22 +365,24 @@ shinyServer(function(input, output) {
         })
         
         output$round <- renderPlot({
-          req(input$mod)
-          colnames(df)[which(colnames(df)==input$label)] <<- "label"
-          colnames(df)[which(colnames(df)==input$image)] <<- "image"
-          active_set <<- df %>% na.omit()
-          candidate_set <<- df %>% filter(is.na(label) == TRUE)
-          print("Calling create models")
-          temp <- createModels(active_set, input$lambda, RND)
-          tab <<- tab %>% filter(ROUND < RND)
-          tab <<- rbind(tab, temp) %>% na.omit()
-          print(tab)
-          plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
-          return(plot)
+          if (!is.null(rv$selected)) {
+            req(input$mod & INNERRND == RND)
+            colnames(df)[which(colnames(df)==input$label)] <<- "label"
+            colnames(df)[which(colnames(df)==input$image)] <<- "image"
+            active_set <<- df %>% na.omit()
+            candidate_set <<- df %>% filter(is.na(label) == TRUE)
+            print("Calling create models")
+            temp <- createModels(active_set, input$lambda, RND)
+            tab <<- tab %>% filter(ROUND < RND)
+            tab <<- rbind(tab, temp) %>% na.omit()
+            print(tab)
+            plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
+            return(plot)
+          }
         })
         
         output$afterPlot <- renderUI({
-          req(input$mod)
+          req(input$mod & INNERRND == RND)
           actionButton("cont", "Get Data To Label")
         })
         
@@ -447,7 +450,22 @@ shinyServer(function(input, output) {
       
     } ### END OF ACTIVELY LEARN FUNCTION
     
-
+  
+    # Define reactiveValue
+    rv <- reactiveValues(selected = NULL)
+    
+    # 1. Pass value of input$mod to Reactive Value
+    observe( {
+      rv$selected <- input$mod
+    })
+    
+    # 2. clear selection if different filter is chosen
+    observeEvent(input$continueActiveLearning, {
+      rv$selected <- NULL
+    })
+    
+    
+    
     
   ####                                                 ####
   ####                                                 ####
