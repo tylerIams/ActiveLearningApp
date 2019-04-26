@@ -265,7 +265,7 @@ shinyServer(function(input, output) {
     output$saveSuccessful <- renderText({
       req(input$save)
       print(img_file_name)
-      img_file <- str_c(str_replace(img_file_name, "UNLABELED/", ""))
+      img_file <- str_c("www/", img_file_name)
       print(img_file)
       df$label[df$image == img_file] <<- input$newLab
       df_unlabeled <<- subset(df, is.na(df$label))
@@ -327,6 +327,7 @@ shinyServer(function(input, output) {
       RND <<- RND + 1
       showTab(inputId = "tabactice", target = "Plot")
       hideTab(inputId = "tabactice", target = "Image")
+      hideTab(inputId = "tabactice", target = "Size of Labeled Data")
       Actively_Learn()
     })
     
@@ -439,7 +440,7 @@ shinyServer(function(input, output) {
         }
         print(str_c("CALL ", CALL))
         print(str_c("Image name: ", img_name))
-        img_file <- str_c("UNLABELED/", img_name)
+        img_file <- str_c("UNLABELED/", str_replace(as.character(img_name), "www/UNLABELED/", ""))
         tags$div(style = 'padding: 50px',
                  tags$img(src = img_file, height=350, width=350)
         )
