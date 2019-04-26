@@ -74,6 +74,10 @@ shinyUI(fluidPage(
                              uiOutput("continueTolabel")
                              ),
                     tabPanel("View Featurized dataset",
+                             br(),
+                             textOutput("wait"),
+                             hr(),
+                             hr(),
                              tableOutput("getViewfeaturized")
                              ),
                     tabPanel("Size of Labeled Data",
@@ -87,6 +91,9 @@ shinyUI(fluidPage(
                     tabPanel("Active Learning Labeling",
                              tags$h4("Can you label this image?"),
                              uiOutput("showImage"),
+                             hr(),
+                             uiOutput("cheatLabeling2"),
+                             hr(),
                              uiOutput("applyAL_Label"),
                              uiOutput("saveAL_Label"),
                              uiOutput("ALsaveSuccessful")

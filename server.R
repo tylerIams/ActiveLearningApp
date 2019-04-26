@@ -15,7 +15,7 @@ source("modeling_functions.R")
 library(reticulate)
 #use_python("/Users/TylerIams/anaconda3/bin")
 use_condaenv("tensorflow")
-#source_python("FeaturizeImages.py")
+source_python("FeaturizeImages.py")
 
 df <- NULL
 df_labeled <- NULL
@@ -46,7 +46,13 @@ shinyServer(function(input, output) {
       hideTab(inputId = "tabactice", target = "View Featurized dataset") 
       hideTab(inputId = "tabactice", target = "Size of Labeled Data")
       hideTab(inputId = "tabactice", target = "Active Learning Labeling")
-      showTab(inputId = "tabactice", target = "View Dataset") 
+      showTab(inputId = "tabactice", target = "View Dataset")
+      removeUI(
+        selector = "#featurize"
+      )
+      removeUI(
+        selector = "#detectImages"
+      )
       
       fileInput("file1", "Choose CSV File",
                 multiple = FALSE,
@@ -175,7 +181,7 @@ shinyServer(function(input, output) {
     req(input$continue)
         sel <- df %>% select(input$label) %>% na.omit()
         num <- nrow(sel)
-        return(str_c("Use: ", input$label, "  This has ", num, " labels."))
+        return(str_c("Use: ", input$label, ";  This has ", num, " labeled images."))
   })
   
   output$imageTextInfo <- renderText({
@@ -241,7 +247,7 @@ shinyServer(function(input, output) {
     
     output$canYouLabel <- renderText({
       req(inState)
-      return(str_c("Can you label this image? "))
+      return(str_c("Please label this image "))
     })
     
     output$img <- renderUI({
@@ -254,7 +260,7 @@ shinyServer(function(input, output) {
     })
     output$applyLabel <- renderUI({
       req(inState)
-      selectInput("newLab", "Please Select a label: ", choices = levels(df$label))
+      selectInput("newLab", "Please Select a label: ", choices = c("Negative", "Positive"))
     })
     
     output$saveLabel <- renderUI({
@@ -267,17 +273,22 @@ shinyServer(function(input, output) {
       print(img_file_name)
       img_file <- str_c("www/", img_file_name)
       print(img_file)
-      df$label[df$image == img_file] <<- input$newLab
+      if (input$newLab == "Negative") {
+        lb <- 0
+      } else{
+        lb <- 1
+      }
+      df$label[df$image == img_file] <<- lb
       df_unlabeled <<- subset(df, is.na(df$label))
       df_labeled <<- subset(df, !(is.na(df$label)))
       write_csv(df, "final_data_test.csv")
       return("Label Saved Successfully")
     })
-    observeEvent(input$save, {
-      removeUI(
-        selector = "#save"
-      )
-    })
+    # observeEvent(input$save, {
+    #   removeUI(
+    #     selector = "#save"
+    #   )
+    # })
   
     output$numLabelsInfo <- renderText({
       req(input$save)
@@ -323,7 +334,7 @@ shinyServer(function(input, output) {
     
     
     observeEvent(input$beginActiveLearning, {
-      CALL <<- CALL + 1
+      CALL <<- 12
       RND <<- RND + 1
       showTab(inputId = "tabactice", target = "Plot")
       hideTab(inputId = "tabactice", target = "Image")
@@ -343,7 +354,9 @@ shinyServer(function(input, output) {
         hideTab(inputId = "tabactice", target = "Least Confident Data")
         showTab(inputId = "tabactice", target = "Active Learning Labeling")
       }
+      
       Actively_Learn()
+      
     })
     
     Actively_Learn <- function() {
@@ -425,7 +438,9 @@ shinyServer(function(input, output) {
         })
         
         observeEvent(input$exportDNL, {
+          showTab(inputId = "tabactice", target = "Active Learning Labeling")
           write_csv(candidate_set[1:input$exportNum,], "Data_Needs_Labs.csv")
+          
         })
       
         } ## END IF CALL - 1 %% 12 STATEMENT
@@ -445,10 +460,14 @@ shinyServer(function(input, output) {
                  tags$img(src = img_file, height=350, width=350)
         )
       })
-      
+      output$cheatLabeling2 <- renderText({
+        req(input$cont)
+        img_name <- str_c(candidate_set$image[1])
+        return(img_name)
+      })
       output$applyAL_Label <- renderUI({
         req(input$cont)
-        selectInput("newLab", "Please Select a label: ", choices = levels(df$label))
+        selectInput("newLab", "Please Select a label: ", choices = c("Negative", "Positive"))
       })
       
       output$saveAL_Label <- renderUI({
@@ -460,7 +479,12 @@ shinyServer(function(input, output) {
         req(input$saveAL_LABEL)
         img_file <- str_c(candidate_set$image[1])
         candidate_set <<- candidate_set[-1,]
-        df$label[df$image == img_file] <<- input$newLab
+        if (input$newLab == "Negative") {
+          lb <- 0
+        } else{
+          lb <- 1
+        }
+        df$label[df$image == img_file] <<- lb
         write_csv(df, "final_data_test.csv")
         tags$div(
           tags$h3("Label Saved Successfully"),
@@ -598,14 +622,18 @@ shinyServer(function(input, output) {
   
   output$featurize <- renderUI({
     req(input$images == "Yes")
-    actionButton("featurize", "Featurize")
+    actionButton("featurizeBot", "Featurize")
   })
-  
-  observeEvent(input$featurize, {
+  output$wait <- renderText({
+    req(input$images == "Yes")
+    return(str_c("Featurization takes a couple of minutes, please wait!!!"))
+  })
+  observeEvent(input$featurizeBot, {
     data_featurized <<- feat_data()
   })
   output$getViewfeaturized <- renderTable({
-    req(input$featurize)
+    req(input$featurizeBot)
+    
     return(data_featurized[1:10,(ncol(data_featurized)-2):ncol(data_featurized)])
   })
   
