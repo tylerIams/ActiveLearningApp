@@ -1,6 +1,6 @@
 
 ####This script is for active learning modeling
-active_model <- NULL
+model <- NULL
 y <- 0
 train <<- NULL
 test <<- NULL
@@ -22,17 +22,19 @@ acc1 <<- .90
 ####model with each fold, uses the opposite fold to predict
 ####with the model, and measures the model's accuracy.
 ###It logs the accuracy in a table (acc_tab) and returns it.
-createModels <- function(active_set, lambda, ROUND) {
-  
-  if (y == 0) {
-    #Divide the active set into test and train
-    train_ints <- sample(1:nrow(active_set), nrow(active_set)/2)
-    train <<- active_set[train_ints,]
-    test <<- active_set[-train_ints,]
-  } else {
-    train <<- active_set
-  }
-  
+createModels <- function(train_set, lambda, validation_set, test_set, ROUND) {
+  lambdas <- 10^(seq(2, -5, length.out=22))
+  # if (y == 0) {
+  #   #Divide the active set into test and train
+  #   train_ints <- sample(1:nrow(train_set), nrow(train_set)/2)
+  #   train <<- train_set[train_ints,]
+  #   test <<- train_set[-train_ints,]
+  #   
+  # } else {
+  #   train <<- train_set
+  # }
+  train <<- train_set
+  test <<- test_set
   y <<- y + 1
   
   #Create the training set with fold1
@@ -42,27 +44,48 @@ createModels <- function(active_set, lambda, ROUND) {
   
   print(str_c("label: ", train$label))
   
+  model <<- glmnet(x_train, y_train, alpha=0.0,
+                  lambda=lambdas,
+                  family="binomial")
+  val_set<- model.matrix(~ ., select(validation_set, -image, -label))
+  X_val <- val_set[,-1]
+  y_val <- validation_set$label
+  
+  validation_score_matrix <- predict(model, X_val, type="response")
+  auc_vector <- apply(validation_score_matrix, 
+                      2, 
+                      function(score_vector){
+                        pROC::auc(factor(y_val), score_vector, direction='<') %>% 
+                          as.numeric
+                      })
+  best_lambda_idx <- which.max(auc_vector)
+  validation_auc <- auc_vector[best_lambda_idx]
+  lambda <<- model$lambda[best_lambda_idx]
+  print(auc_vector)
+  print ("best lambda: ", str_c(lambda))
+  
   #Create the first model with fold1 as train and fold2 as test
-  active_model <<- glmnet(x_train, y_train, alpha=0.0, 
-                         lambda=lambda,
-                         family="multinomial")
+  # active_model <<- glmnet(x_train, y_train, alpha=0.0, 
+  #                        lambda=lambda,
+  #                        family="multinomial")
   x_test <- model.matrix(~ ., select(test, -image, -label))
   x_test <- x_test[,-1]
   y_test <- test$label
-  preds <- predict(active_model, newx = x_test, type="class")
+  preds <- predict(model, newx = x_test, s=lambda, type="response")[,1]
+  test_set_auc <- pROC::auc(factor(y_test), preds, direction='<') %>% as.numeric
+  print("test_set_auc:   ", test_set_auc)
+  # tab <- table(preds, y_test)
+  # sum <- 0
+  # acc <- -1.0
+  # if (nrow(tab) == ncol(tab)) {
+  #   for (x in 1:nrow(tab)) {
+  #     sum = sum + tab[x,x]
+  #   }
+  #   acc1 <<- sum/sum(tab)
+  # }
+  # print(acc1)
   
-  tab <- table(preds, y_test)
-  sum <- 0
-  acc <- -1.0
-  if (nrow(tab) == ncol(tab)) {
-    for (x in 1:nrow(tab)) {
-      sum = sum + tab[x,x]
-    }
-    acc1 <<- sum/sum(tab)
-  }
-  print(acc1)
-  
-  acc_tab <- tibble(ROUND = ROUND, ACCURACY = acc1)
+  acc_tab <- tibble(ROUND = ROUND, AUC_ACCURACY = test_set_auc)
   
   return(acc_tab)
 }
@@ -78,10 +101,15 @@ findDataToLabel <- function(candidate_set) {
   x_test <- x_test[,-1]
   y_test <- candidate_set$label
   
-  category_prob <- predict(active_model, newx=x_test, type="response")
+  category_prob <- predict(model, newx=x_test, s=lambda, type="response")
+  print(category_prob)
   max_probs <- apply(category_prob, 1, FUN = max)
   candidate_set <- cbind(candidate_set, max_probs)
-  candidate_set <- candidate_set %>% arrange(max_probs)
+  candidate_set$def <- 0
+  candidate_set['def'] <- abs(candidate_set$max_probs-0.5)
+  candidate_set <- candidate_set %>% arrange(def)
+  print(candidate_set$max_probs)
+  candidate_set$def<- NULL
   return(candidate_set)
 }
 
