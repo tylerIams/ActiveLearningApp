@@ -11,6 +11,7 @@ library(png)
 library(DBI)
 library(RSQLite)
 library(shinyjs)
+library(pROC)
 source("modeling_functions.R")
 library(reticulate)
 #use_python("/Users/TylerIams/anaconda3/bin")
@@ -21,13 +22,15 @@ df <- NULL
 df_labeled <- NULL
 df_unlabeled <- NULL
 label <- NULL
-active_set <- NULL
+train_set <- NULL
+validation_set<- NULL
+test_set <- NULL
 candidate_set <- NULL
 imCol <- NULL
 labCol <- NULL
 RND <- 0
 INNERRND <- 0
-tab <- tibble(ROUND = NA, ACCURACY = NA)
+tab <- tibble(ROUND = NA, AUC_ACCURACY = NA)
 files <- NULL
 CALL <- 11
 training_set <- NULL
@@ -219,9 +222,9 @@ shinyServer(function(input, output) {
   
   output$sizeInfo <- renderUI({
     num <- nrow(df_labeled)
-    if (num < 170) { 
+    if (num < 200) { 
        tags$div(
-         tags$p(str_c("You need at least 170 labaled images to begin the Active Selection")), 
+         tags$p(str_c("You need at least 200 labaled images to begin the Active Selection")), 
          actionButton("startLabel", "Start Labeling")
        )
       }
@@ -235,7 +238,7 @@ shinyServer(function(input, output) {
   
   ####                                                          ####
   ####                                                          ####
-  ####   LABELING PORTION - USER HAS UNDER 170 LABELED IMAGES   ####
+  ####   LABELING PORTION - USER HAS UNDER 200 LABELED IMAGES   ####
   ####                                                          ####
   ####                                                          ####
   
@@ -294,10 +297,10 @@ shinyServer(function(input, output) {
       req(input$save)
       num = nrow(df_labeled)
       res = ""
-      if (num >= 170) {
+      if (num >= 200) {
         res = "You may begin active learning"
       } else {
-        numLeft = 170 - num
+        numLeft = 200 - num
         res = str_c("You need ", numLeft, " more labeled images to begin active learning.")
       }
       result = str_c("You now have ", num, " labeled images. ", res) 
@@ -306,7 +309,7 @@ shinyServer(function(input, output) {
     output$goToNextRound <- renderUI({
       req(input$save)
       num = nrow(df_labeled)
-      if (num >= 170) {
+      if (num >= 200) {
         actionButton("beginActiveLearning", "Begin Active Learning")
       } else {
         actionButton("nextLabel", "Label Next Image")  
@@ -327,7 +330,7 @@ shinyServer(function(input, output) {
     
     #####                                                           #####
     #####                                                           #####
-    ##### MODELING PORTION -- ONCE USER HAS OVER 170 LABELED IMAGES #####
+    ##### MODELING PORTION -- ONCE USER HAS OVER 200 LABELED IMAGES #####
     #####                                                           #####
     #####                                                           #####
     
@@ -339,6 +342,16 @@ shinyServer(function(input, output) {
       showTab(inputId = "tabactice", target = "Plot")
       hideTab(inputId = "tabactice", target = "Image")
       hideTab(inputId = "tabactice", target = "Size of Labeled Data")
+      split_ints <- sample(1:nrow(df_labeled), nrow(df_labeled)/2)
+      validation_set <<- df_labeled[split_ints,]
+      test_and_train <<- df_labeled[-split_ints,]
+      test_ints<<- sample(1:nrow(test_and_train), nrow(test_and_train)/2)
+      test_set <<- test_and_train[test_ints,]
+      print(nrow(df))
+      df <<- df[!row.names(df) %in% row.names(validation_set),]
+      print(nrow(df))
+      df<<- df[!row.names(df) %in% row.names(test_set),]
+      print(nrow(df))
       Actively_Learn()
     })
     
@@ -385,16 +398,16 @@ shinyServer(function(input, output) {
             req(input$mod & INNERRND == RND)
             colnames(df)[which(colnames(df)==input$label)] <<- "label"
             colnames(df)[which(colnames(df)==input$image)] <<- "image"
-            active_set <<- df %>% na.omit()
+            train_set <<- df %>% na.omit()
             candidate_set <<- df %>% filter(is.na(label) == TRUE)
             rem_data <- nrow(candidate_set)
             print(str_c("Remaining Unlabeled data: ", rem_data))
             print("Calling create models")
-            temp <- createModels(active_set, input$lambda, RND)
+            temp <- createModels(train_set, input$lambda, validation_set, test_set, RND)
             tab <<- tab %>% filter(ROUND < RND)
             tab <<- rbind(tab, temp) %>% na.omit()
             print(tab)
-            plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
+            plot <- ggplot(data = tab, aes(x = ROUND, y = AUC_ACCURACY)) + geom_line() + geom_point()
             return(plot)
           }
         })
@@ -570,14 +583,14 @@ shinyServer(function(input, output) {
          req(input$exportAll)
          write_csv(df, "FINAL_ACTIVE_LEARNING_DATA.csv")
          write_csv(tab, "FINAL_ACCURACY_TABLE.csv")
-         plot <- ggplot(data = tab, aes(x = ROUND, y = ACCURACY)) + geom_line() + geom_point()
+         plot <- ggplot(data = tab, aes(x = ROUND, y = AUC_ACCURACY)) + geom_line() + geom_point()
          ggsave("FINAL_PLOT.png", plot = plot, width = 7, height = 5, units = "cm")
          tags$div(style = 'padding : 40px',
                   tags$h3("Export Successful"),
                   tags$p("Please check your project directory for 3 files:"),
                   tags$p("1. FINAL_ACTIVE_LEARNING_DATA.csv"),
                   tags$p("2. FINAL_ACCURACY_TABLE.csv"),
-                  tags$p("3. FINAL_PLOT.png")
+                  tags$p("3. FINAL_PLOT.png") 
          )
        })
        
